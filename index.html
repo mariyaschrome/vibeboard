@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-sscale=1.0" />
+    <title>Vibeboard</title>
+    <meta name="theme-color" content="#0f0c14" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100%22><text y=%22.9em%22 font-size=%2290%22>🖤</text></svg>"
+    />
+
+    <!-- Fonts we'll use for the pairings -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bebas+Neue&family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Dancing+Script:wght@600&family=EB+Garamond&family=Inter:wght@400;600&family=Josefin+Sans:wght@400;600&family=Lora&family=Montserrat:wght@400;600&family=Playfair+Display:wght@500;700&family=Quicksand:wght@500;700&family=Space+Mono&family=Special+Elite&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>Vibeboard</h1>
+        <p class="subtitle">Pick a vibe. Get your aesthetic.</p>
+      </header>
+
+      <!-- Vibe buttons get added here by Js -->
+      <section id="vibes" class="vibes"></section>
+
+      <!-- The mood board -->
+      <section id="board" class="board">
+        <div id="board-title" class="board-title">Your Vibe</div>
+        <div id="board-tagline" class="board-tagline">
+          Choose a vibe above to begin.
+        </div>
+
+        <div id="palette" class="palette"></div>
+
+        <div class="board-row">
+          <div class="card">
+            <div class="label">Fonts</div>
+            <div id="font-heading" class="font-heading">
+              Heading + body pairing
+            </div>
+          </div>
+          <div class="card">
+            <div class="label">Mood words</div>
+            <div id="words" class="words"></div>
+          </div>
+        </div>
+
+        <blockquote id="quote" class="quote"></blockquote>
+      </section>
+
+      <section class="actions">
+        <button id="btn-shuffle">🔀 Shuffle</button>
+        <button id="btn-save">📸 Save as image</button>
+      </section>
+
+      <p id="toast" class="toast"></p>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
