@@ -411,10 +411,368 @@ function render() {
 // ---------- Buttons ----------
 document.getElementById("btn-shuffle").addEventListener("click", shuffle);
 
-document.getElementById("btn-save").addEventListener("click", function () {
-  showToast("Save as image is coming in the next step! 📸");
-});
-
 // ---------- Start ----------
 buildVibeButtons();
 selectVibe(pick(vibes));
+
+// ---------- Save as image ----------
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(" ");
+  let line = "";
+
+  words.forEach(function (word) {
+    const test = line ? line + " " + word : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, y);
+      line = word;
+      y += lineHeight;
+    } else {
+      line = test;
+    }
+  });
+
+  ctx.fillText(line, x, y);
+  return y;
+}
+
+function roundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+async function saveImage() {
+  if (!board) return;
+
+  const W = 1080;
+  const H = 1350;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  const colors = board.palette;
+  const heading = "'" + board.font.heading + "', " + board.font.fallback;
+  const body = "'" + board.font.body + "', " + board.font.fallback;
+  const mono = "'Space Mono', monospace";
+
+  // Make sure the fonts are ready before drawing
+  try {
+    await Promise.all([
+      document.fonts.load("60px '" + board.font.heading + "'"),
+      document.fonts.load("30px '" + board.font.body + "'"),
+      document.fonts.load("20px 'Space Mono'"),
+    ]);
+  } catch (e) {
+    // If fonts fail, the fallback fonts are used.
+  }
+
+  // Background and frame
+  ctx.fillStyle = colors[0];
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = colors[2];
+  ctx.globalAlpha = 0.4;
+  ctx.lineWidth = 3;
+  roundedRect(ctx, 30, 30, W - 60, H - 60, 24);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Title (shrinks if the name is long)
+  ctx.textBaseline = "alphabetic";
+  let titleSize = 104;
+  ctx.font = titleSize + "px " + heading;
+  while (ctx.measureText(currentVibe.name).width > W - 180 && titleSize > 40) {
+    titleSize -= 4;
+    ctx.font = titleSize + "px " + heading;
+  }
+  ctx.fillStyle = colors[2];
+  ctx.fillText(currentVibe.name, 90, 175);
+
+  // Tagline
+  ctx.font = "32px " + body;
+  ctx.fillStyle = colors[4];
+  ctx.globalAlpha = 0.8;
+  wrapText(ctx, currentVibe.tagline, 90, 235, W - 180, 44);
+  ctx.globalAlpha = 1;
+
+  // Palette
+  const px = 90,
+    py = 320,
+    pw = W - 180,
+    ph = 230;
+  ctx.save();
+  roundedRect(ctx, px, py, pw, ph, 24);
+  ctx.clip();
+  const sw = pw / colors.length;
+  colors.forEach(function (hex, i) {
+    ctx.fillStyle = hex;
+    ctx.fillRect(px + i * sw, py, sw + 1, ph);
+  });
+  ctx.restore();
+
+  colors.forEach(function (hex, i) {
+    const label = hex.toUpperCase();
+    ctx.font = "20px " + mono;
+    const tw = ctx.measureText(label).width;
+    const cx = px + i * sw + sw / 2;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    roundedRect(ctx, cx - tw / 2 - 10, py + ph - 48, tw + 20, 32, 10);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.fillText(label, cx, py + ph - 25);
+    ctx.textAlign = "left";
+  });
+
+  // Two cards: fonts and mood words
+  const cardY = 590,
+    cardH = 300,
+    cardW = (W - 180 - 30) / 2;
+  const leftX = 90,
+    rightX = 90 + cardW + 30;
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.07)";
+  roundedRect(ctx, leftX, cardY, cardW, cardH, 24);
+  ctx.fill();
+  roundedRect(ctx, rightX, cardY, cardW, cardH, 24);
+  ctx.fill();
+
+  ctx.fillStyle = colors[4];
+  ctx.globalAlpha = 0.6;
+  ctx.font = "20px " + mono;
+  ctx.fillText("FONTS", leftX + 30, cardY + 50);
+  ctx.fillText("MOOD WORDS", rightX + 30, cardY + 50);
+  ctx.globalAlpha = 1;
+
+  // Font card
+  let fontSize = 56;
+  ctx.font = fontSize + "px " + heading;
+  while (
+    ctx.measureText(board.font.heading).width > cardW - 60 &&
+    fontSize > 28
+  ) {
+    fontSize -= 2;
+    ctx.font = fontSize + "px " + heading;
+  }
+  ctx.fillStyle = colors[2];
+  ctx.fillText(board.font.heading, leftX + 30, cardY + 140);
+
+  ctx.font = "28px " + body;
+  ctx.fillStyle = colors[4];
+  ctx.fillText("with " + board.font.body, leftX + 30, cardY + 195);
+
+  ctx.font = "90px " + heading;
+  ctx.fillStyle = colors[2];
+  ctx.globalAlpha = 0.5;
+  ctx.fillText("Aa", leftX + 30, cardY + 275);
+  ctx.globalAlpha = 1;
+
+  // Mood word pills
+  ctx.font = "26px " + body;
+  let wx = rightX + 30;
+  let wy = cardY + 100;
+  board.words.forEach(function (w) {
+    const pillW = ctx.measureText(w).width + 36;
+    if (wx + pillW > rightX + cardW - 30) {
+      wx = rightX + 30;
+      wy += 58;
+    }
+    ctx.strokeStyle = colors[2];
+    ctx.lineWidth = 2;
+    roundedRect(ctx, wx, wy, pillW, 44, 22);
+    ctx.stroke();
+    ctx.fillStyle = colors[2];
+    ctx.fillText(w, wx + 18, wy + 30);
+    wx += pillW + 12;
+  });
+
+  // Quote
+  ctx.fillStyle = colors[2];
+  ctx.fillRect(90, 960, 6, 250);
+
+  ctx.fillStyle = colors[4];
+  ctx.font = "48px " + heading;
+  wrapText(ctx, "\u201C" + board.quote + "\u201D", 130, 1030, W - 260, 68);
+
+  // Footer
+  ctx.font = "20px " + mono;
+  ctx.globalAlpha = 0.45;
+  ctx.textAlign = "center";
+  ctx.fillText("VIBEBOARD", W / 2, H - 60);
+  ctx.textAlign = "left";
+  ctx.globalAlpha = 1;
+
+  // Download it
+  const fileName =
+    "vibeboard-" +
+    currentVibe.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") +
+    ".png";
+
+  canvas.toBlob(function (blob) {
+    if (!blob) {
+      showToast("Couldn't save. Try again!");
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 2000);
+    showToast("Saved! 📸");
+  }, "image/png");
+}
+
+document.getElementById("btn-save").addEventListener("click", saveImage);
+
+// ---------- Create your own vibe ----------
+const fontPairs = [
+  {
+    label: "Playfair Display + Lora",
+    heading: "Playfair Display",
+    body: "Lora",
+    fallback: "serif",
+  },
+  {
+    label: "Cinzel + Cormorant Garamond",
+    heading: "Cinzel",
+    body: "Cormorant Garamond",
+    fallback: "serif",
+  },
+  {
+    label: "Cormorant Garamond + EB Garamond",
+    heading: "Cormorant Garamond",
+    body: "EB Garamond",
+    fallback: "serif",
+  },
+  {
+    label: "Abril Fatface + Montserrat",
+    heading: "Abril Fatface",
+    body: "Montserrat",
+    fallback: "sans-serif",
+  },
+  {
+    label: "Bebas Neue + Inter",
+    heading: "Bebas Neue",
+    body: "Inter",
+    fallback: "sans-serif",
+  },
+  {
+    label: "Dancing Script + Quicksand",
+    heading: "Dancing Script",
+    body: "Quicksand",
+    fallback: "cursive",
+  },
+  {
+    label: "Special Elite + Space Mono",
+    heading: "Special Elite",
+    body: "Space Mono",
+    fallback: "monospace",
+  },
+];
+
+const fontSelect = document.getElementById("custom-font");
+
+fontPairs.forEach(function (pair, i) {
+  const option = document.createElement("option");
+  option.value = i;
+  option.textContent = pair.label;
+  fontSelect.appendChild(option);
+});
+
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const a = s * Math.min(l, 1 - l);
+
+  function f(n) {
+    const k = (n + h / 30) % 12;
+    const c = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * c)
+      .toString(16)
+      .padStart(2, "0");
+  }
+
+  return "#" + f(0) + f(8) + f(4);
+}
+
+function randomColors() {
+  const h = Math.floor(Math.random() * 360);
+  const colors = [
+    hslToHex(h, 30, 10),
+    hslToHex(h, 30, 22),
+    hslToHex((h + 30) % 360, 70, 65),
+    hslToHex((h + 180) % 360, 40, 45),
+    hslToHex(h, 30, 92),
+  ];
+  colors.forEach(function (hex, i) {
+    document.getElementById("c" + i).value = hex;
+  });
+}
+
+document
+  .getElementById("btn-random-colors")
+  .addEventListener("click", randomColors);
+
+document.getElementById("btn-create").addEventListener("click", function () {
+  const name = document.getElementById("custom-name").value.trim() || "My Vibe";
+  const quote =
+    document.getElementById("custom-quote").value.trim() ||
+    "Make your own kind of magic.";
+  const pair = fontPairs[fontSelect.value];
+
+  const colors = [0, 1, 2, 3, 4].map(function (i) {
+    return document.getElementById("c" + i).value;
+  });
+
+  let words = document
+    .getElementById("custom-words")
+    .value.split(",")
+    .map(function (w) {
+      return w.trim();
+    })
+    .filter(function (w) {
+      return w.length > 0;
+    });
+
+  if (words.length === 0) {
+    words = ["unique", "bold", "dreamy", "yours", "magic"];
+  }
+
+  const vibe = {
+    name: name,
+    emoji: "\u2728",
+    tagline: "A vibe made by you.",
+    palettes: [colors],
+    fonts: [pair],
+    words: words,
+    quotes: [quote],
+  };
+
+  currentVibe = vibe;
+  board = {
+    palette: colors,
+    font: pair,
+    words: pickWords(words, 5),
+    quote: quote,
+  };
+
+  highlightButton();
+  render();
+  document
+    .getElementById("board")
+    .scrollIntoView({ behavior: "smooth", block: "start" });
+  showToast("Your vibe is ready! ✨");
+});

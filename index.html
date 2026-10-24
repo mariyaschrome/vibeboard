@@ -60,6 +60,63 @@
         <button id="btn-save">📸 Save as image</button>
       </section>
 
+      <details class="custom" id="custom">
+        <summary>Create your own vibe</summary>
+
+        <div claass="custom-body">
+          <label
+            >Vibe name
+            <input
+              type="text"
+              id="custom-name"
+              placeholder="e.g. Velvet Midnight"
+              maxlength="30"
+            />
+          </label>
+
+          <div class="label">Your 5 colors</div>
+          <div class="color-inputs">
+            <label
+              >Background <input type="color" id="c0" value="1b1424"
+            /></label>
+            <label>Panel <input type="color" id="c1" value="#3a2850" /></label>
+            <label>Accent <input type="color" id="c2" value="#b88cff" /></label>
+            <label>Extra <input type="color" id="c3" value="#6b4a9e" /></label>
+            <label>Text <input type="color" id="c4" value="#f1e8ff" /></label>
+          </div>
+          <button id="btn-random-colors" class="small-btn">
+            🎲 Random colors
+          </button>
+
+          <label
+            >Fonts
+            <select id="custom-font"></select>
+          </label>
+          <label
+            >Mood words (separate with commas)
+            <input
+              type="text"
+              id="custom-words"
+              placeholder="dreamy, dark, soft, wild, golden"
+            />
+          </label>
+
+          <label
+            >Quote
+            <textarea
+              id="custom-quote"
+              rows="2"
+              maxlength="120"
+              placeholder="Write something that fits your vibe..."
+            ></textarea>
+          </label>
+
+          <button id="btn-create" class="small-btn primary">
+            Create my board
+          </button>
+        </div>
+      </details>
+
       <p id="toast" class="toast"></p>
     </main>
 
